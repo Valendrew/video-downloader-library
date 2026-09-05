@@ -39,6 +39,13 @@ Then follow [your first request](docs/quickstart.md) for a complete transcriptio
 example. Settings are explicit; the optional environment loader reads only selected
 services and never opens `.env` files.
 
+## Browser demo
+
+Run the optional [browser demo](docs/demo.md) to try independent components, the
+actual `Pipeline`, and a composed audio download flow. It includes local setup and
+manual Render deployment instructions. Provider operations use server-side keys;
+there is no login, so anyone who can reach a hosted demo can use those keys.
+
 ## Documentation
 
 Browse the [documentation site](https://valendrew.github.io/video-downloader-library/)
@@ -55,8 +62,8 @@ or read the guides in this checkout:
 ## Development
 
 ```bash
-uv sync --locked --extra all --group dev
-uv run python -m unittest discover -s tests
+uv sync --locked --extra all --group dev --group demo
+uv run --group demo python -m unittest discover -s tests
 uv run mkdocs serve
 ```
 

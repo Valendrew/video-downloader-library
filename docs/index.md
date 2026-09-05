@@ -9,6 +9,7 @@ Use the Python components independently, or combine them in one asynchronous pip
 
 [Get started](install.md){ .md-button .md-button--primary }
 [Make your first request](quickstart.md){ .md-button }
+[Try the browser demo](demo.md){ .md-button }
 
 ## Pick the job you need
 

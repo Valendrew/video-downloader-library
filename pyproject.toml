@@ -28,6 +28,11 @@ Repository = "https://github.com/Valendrew/video-downloader-library"
 Issues = "https://github.com/Valendrew/video-downloader-library/issues"
 
 [dependency-groups]
+demo = [
+    "fastapi>=0.115,<1",
+    "uvicorn>=0.34,<1",
+    "python-multipart>=0.0.20,<1",
+]
 dev = [
     "mkdocs>=1.6.1,<2",
     "mkdocs-material>=9.6,<10",

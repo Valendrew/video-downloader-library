@@ -1,0 +1,10 @@
+# Provider keys are optional. Add only those needed in Render's Environment page.
+services:
+  - type: web
+    name: video-context-pipeline-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./demo/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: "off"

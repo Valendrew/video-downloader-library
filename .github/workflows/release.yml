@@ -44,10 +44,10 @@ jobs:
               raise SystemExit(f"tag {actual!r} does not match project version {expected!r}")
           PY
       - name: Install locked development dependencies
-        run: uv sync --locked --extra all --group dev
+        run: uv sync --locked --extra all --group dev --group demo
       - name: Run offline tests and documentation build
         run: |
-          uv run python -m unittest discover -s tests
+          uv run --group demo python -m unittest discover -s tests
           uv run mkdocs build --strict
       - name: Build release artifacts and checksums
         run: |

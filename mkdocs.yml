@@ -52,6 +52,7 @@ nav:
       - Installation: install.md
       - First request: quickstart.md
       - Configuration: configuration.md
+      - Browser demo: demo.md
   - Guides:
       - Pipeline: components/pipeline.md
       - Download and metadata: components/downloads.md

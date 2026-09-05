@@ -1,0 +1,495 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #153a3c;
+  background: #f3f7f6;
+  font-size: 15px;
+  line-height: 1.5;
+  --teal: #087f78;
+  --border: #cbdedb
+}
+
+* {
+  box-sizing: border-box
+}
+
+body {
+  margin: 0
+}
+
+header,
+main,
+footer {
+  max-width: 1320px;
+  margin: auto;
+  padding: 28px 32px
+}
+
+header {
+  border-bottom: 1px solid var(--border)
+}
+
+header p {
+  margin: 8px 0
+}
+
+.brand {
+  font-size: 23px;
+  font-weight: 700;
+  text-decoration: none;
+  color: inherit
+}
+
+.brand span,
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: .14em;
+  color: #517774
+}
+
+.brand span {
+  margin-left: 12px
+}
+
+#capabilities,
+.muted {
+  color: #54716e;
+  font-size: 13px
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start
+}
+
+section.workspace,
+aside>section,
+.results {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px
+}
+
+aside {
+  display: grid;
+  gap: 24px
+}
+
+.results {
+  grid-column: 1/-1;
+  min-width: 0
+}
+
+h1 {
+  font-size: 22px
+}
+
+h2 {
+  font-size: 17px
+}
+
+h1,
+h2 {
+  margin: 0 0 12px
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit
+}
+
+button {
+  background: white;
+  border: 1px solid #afc8c4;
+  border-radius: 7px;
+  padding: 9px 13px;
+  color: #215955;
+  cursor: pointer
+}
+
+button:hover {
+  background: #eaf5f2
+}
+
+button:disabled {
+  opacity: .45;
+  cursor: default
+}
+
+.primary {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: white
+}
+
+.primary:hover {
+  background: #086d67
+}
+
+.danger {
+  color: #994a38
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #abc5c0;
+  border-radius: 7px;
+  padding: 9px;
+  background: white;
+  width: 100%;
+  color: #173e3b
+}
+
+textarea {
+  min-height: 82px;
+  resize: vertical
+}
+
+input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--teal)
+}
+
+input[type=file] {
+  font-size: 12px
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 5px
+}
+
+.field {
+  margin: 14px 0
+}
+
+.field-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+.field-heading label {
+  margin: 0
+}
+
+.field-heading+input,
+.field-heading+select,
+.field-heading+textarea {
+  margin-top: 6px
+}
+
+.help {
+  position: relative;
+  font-size: 12px;
+  font-weight: 400
+}
+
+.help summary {
+  color: var(--teal);
+  cursor: help;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 19px;
+  height: 19px;
+  text-align: center
+}
+
+.help p {
+  position: absolute;
+  z-index: 5;
+  top: 20px;
+  left: -80px;
+  width: 240px;
+  padding: 12px;
+  background: #173e3b;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #153a3c22;
+  margin: 0
+}
+
+.help:hover p {
+  display: block
+}
+
+.help:not([open]):hover p {
+  display: block
+}
+
+.group {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 14px;
+  margin: 18px 0
+}
+
+.group>summary {
+  font-weight: 600;
+  cursor: pointer
+}
+
+.presets,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0
+}
+
+.presets button {
+  font-size: 12px;
+  padding: 7px 10px
+}
+
+.plan {
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 20px
+}
+
+.node,
+.step {
+  border: 1px solid var(--border);
+  background: #f2f8f6;
+  border-radius: 7px;
+  padding: 9px 12px;
+  margin: 7px 0;
+  font-size: 13px
+}
+
+.step[data-state=completed] {
+  border-left: 4px solid var(--teal)
+}
+
+.step[data-state=failed] {
+  border-left: 4px solid #b64930
+}
+
+.step[data-state=running] {
+  border-left: 4px solid #ca9625
+}
+
+.step small {
+  display: block;
+  color: #54716e
+}
+
+#review {
+  background: #edf8f4;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0
+}
+
+#notice {
+  color: #a3402b;
+  white-space: pre-wrap
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  background: #f2f7f5;
+  padding: 12px;
+  border-radius: 6px;
+  max-height: 420px;
+  overflow: auto
+}
+
+.table-wrap {
+  overflow: auto;
+  max-height: 460px;
+  margin: 12px 0
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px
+}
+
+th,
+td {
+  text-align: left;
+  padding: 9px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  max-width: 380px;
+  overflow-wrap: anywhere
+}
+
+th {
+  background: #eaf3f0;
+  position: sticky;
+  top: 0
+}
+
+img,
+video {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 7px
+}
+
+audio {
+  width: 100%
+}
+
+a {
+  color: #087a73
+}
+
+.artifact {
+  border-top: 1px solid var(--border);
+  padding: 14px 0;
+  overflow-wrap: anywhere
+}
+
+.artifact button,
+.artifact a {
+  font-size: 12px;
+  margin-right: 8px
+}
+
+.artifact p {
+  margin: 0 0 8px
+}
+
+#upload-form {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px
+}
+
+#upload-form label {
+  margin-top: 6px
+}
+
+details {
+  margin: 10px 0
+}
+
+summary {
+  cursor: pointer
+}
+
+progress {
+  width: 100%;
+  accent-color: var(--teal)
+}
+
+.readable {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere
+}
+
+.result-block {
+  margin: 16px 0;
+  padding-left: 12px;
+  border-left: 2px solid #d7e9e4
+}
+
+:focus-visible {
+  outline: 3px solid #dcab45;
+  outline-offset: 3px
+}
+
+footer {
+  color: #54716e;
+  font-size: 12px;
+  text-align: center
+}
+
+[hidden] {
+  display: none !important
+}
+
+@media(max-width:780px) {
+
+  header,
+  main,
+  footer {
+    padding: 20px 16px
+  }
+
+  main {
+    grid-template-columns: 1fr;
+    gap: 16px
+  }
+
+  .results {
+    grid-column: auto
+  }
+
+  section.workspace,
+  aside>section,
+  .results {
+    padding: 18px
+  }
+
+  .section-heading {
+    flex-wrap: wrap;
+    gap: 0
+  }
+
+  .help p {
+    left: -120px;
+    width: 220px
+  }
+}
+
+/* Keep field help anchored inside the form on narrow screens. */
+.field-heading {
+  position: relative
+}
+
+.field-heading .help {
+  position: static
+}
+
+.field-heading .help p {
+  left: 0;
+  top: 100%;
+  width: min(240px, 100%)
+}
+
+.facts {
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.facts > div {
+  display: grid;
+  grid-template-columns: minmax(110px, 30%) minmax(0, 1fr);
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.facts dt {
+  color: #54716e;
+}
+
+.facts dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

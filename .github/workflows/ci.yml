@@ -26,15 +26,15 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: astral-sh/setup-uv@v6
       - name: Install locked extras and development tools
-        run: uv sync --locked --extra all --group dev
+        run: uv sync --locked --extra all --group dev --group demo
       - name: Check formatting and lint
         run: |
-          uv run ruff check src tests scripts examples
-          uv run ruff format --check src tests scripts examples
+          uv run ruff check src tests scripts examples demo
+          uv run ruff format --check src tests scripts examples demo
       - name: Check package types
-        run: uv run mypy src/video_context_pipeline
+        run: uv run --group demo mypy src/video_context_pipeline demo
       - name: Run offline unit tests
-        run: uv run python -m unittest discover -s tests
+        run: uv run --group demo python -m unittest discover -s tests
       - name: Build package
         run: uv build
       - name: Build strict documentation
