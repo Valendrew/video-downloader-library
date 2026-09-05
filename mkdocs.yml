@@ -1,0 +1,23 @@
+site_name: Video Context Pipeline
+site_url: https://valendrew.github.io/video-downloader-library/
+repo_url: https://github.com/Valendrew/video-downloader-library
+repo_name: Valendrew/video-downloader-library
+strict: true
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Configuration: configuration.md
+  - Schemas: schemas.md
+  - Components:
+      - Pipeline: components/pipeline.md
+      - Download and metadata: components/downloads.md
+      - Transcription: components/transcription.md
+      - Visual understanding: components/visual.md
+      - Local media tools: components/media-tools.md
+  - Errors and logging: errors-and-logging.md
+  - Compatibility: compatibility.md
+  - Dependencies and provenance: dependencies.md
+  - Provider validation: provider-validation.md
+  - Implementation plan: implementation-plan.md
+exclude_docs: |
+  execution/

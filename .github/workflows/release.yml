@@ -1,0 +1,59 @@
+name: Prepare GitHub release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing v* tag to release
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - name: Install local media tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v6
+      - name: Verify tag matches project version
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          expected = f"v{version}"
+          actual = os.environ["RELEASE_TAG"]
+          if actual != expected:
+              raise SystemExit(f"tag {actual!r} does not match project version {expected!r}")
+          PY
+      - name: Install locked development dependencies
+        run: uv sync --locked --extra all --group dev
+      - name: Run offline tests and documentation build
+        run: |
+          uv run python -m unittest discover -s tests
+          uv run mkdocs build --strict
+      - name: Build release artifacts and checksums
+        run: |
+          uv build
+          (cd dist && sha256sum * > SHA256SUMS)
+      - name: Create release and upload artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$RELEASE_TAG" dist/* --title "$RELEASE_TAG" --generate-notes
