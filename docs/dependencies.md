@@ -1,10 +1,15 @@
 # Dependencies and code provenance
 
+## Project license and source
+
 The library source is a new implementation. The imported applications are behavior references; they have no license files, and their source must not be copied into this package. They remain unchanged Git submodules and must not be included in release archives.
 
 The library uses MIT licensing. Optional dependencies retain their own licenses. Installing a provider extra does not change those dependencies' license terms.
 
-The following package metadata was inspected during implementation:
+## Optional Python dependencies
+
+Choose extras in the [installation guide](install.md#choose-dependencies). The following
+package metadata was inspected during implementation:
 
 | Dependency | Checked version | Reported license |
 |---|---|---|
@@ -14,6 +19,17 @@ The following package metadata was inspected during implementation:
 | mutagen, installed by yt-dlp's default extra | 1.48.1 | GPL-2.0-or-later |
 | pycryptodomex, installed by yt-dlp's default extra | 3.23.0 | BSD, Public Domain |
 
+## Host tools
+
 FFmpeg, ffprobe and a supported JavaScript runtime are installed separately; they are not bundled in the library wheel. Their licenses depend on the selected distributions/builds. In particular, do not describe every installed dependency or tool as MIT-licensed.
+
+## Documentation and development tools
+
+MkDocs and Material for MkDocs are development dependencies, installed through the
+`dev` group. They are not runtime dependencies of the library. The theme uses system
+fonts, so readers do not need a remote font service. See
+[documentation development](documentation.md) for preview and build commands.
+
+## Before publication
 
 Before publishing a new version, inspect the lockfile and dependency license changes, build the wheel and source archive, and verify that neither includes the imported projects, private credentials, downloaded media or validation responses. GitHub release automation prepares artifacts; publishing and GitHub Pages deployment must be deliberately triggered.

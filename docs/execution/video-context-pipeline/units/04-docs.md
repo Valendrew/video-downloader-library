@@ -7,7 +7,7 @@ Document the actual usable public API in short readable pages and prepare (not e
 ## Prerequisites and required inputs
 Verified [core](01-core.md#outcome), [media](02-media.md#outcome), and [API providers](03-providers.md#outcome). Read actual signatures; docs must not invent APIs.
 ## Expected result
-Small MkDocs site and runnable import/configuration examples. Pinned GitHub release installation uses verified repository https://github.com/Valendrew/video-downloader-library; clearly mark release0.1.0 as prepared, not yet published. No PyPI publication or actual deployment.
+Small MkDocs site and runnable import/configuration examples. Installation uses the repository checkout. No PyPI publication or actual deployment.
 ## Owned paths and exclusions
 Own README.md, LICENSE, mkdocs.yml, .env.example, examples/, .github/workflows/, docs/index.md, docs/install.md, docs/configuration.md, docs/schemas.md, docs/errors-and-logging.md, docs/compatibility.md, docs/components/ and this record. Do not edit docs/implementation-plan.md, docs/provider-validation.md, other execution artifacts, .env, src/, pyproject.toml, uv.lock or external/.
 ## Interfaces and constraints
@@ -29,7 +29,7 @@ offline suite, package build, and strict documentation build on Python 3.11 and 
 The site documents the verified public contracts, all environment-loader fields,
 configuration choices, component input/output boundaries, timing and formatting
 provenance, local artifact ownership, compatibility requirements, operational limits,
-and recorded provider-validation gaps. Release `v0.1.0` and Pages deployment are
+and recorded provider-validation gaps. Publication and Pages deployment are
 prepared only; no release or deployment was performed.
 ## Verification
 Focused checks passed:

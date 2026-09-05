@@ -1,54 +1,69 @@
 # Video Context Pipeline
 
-Typed asynchronous building blocks for inspecting public videos, downloading media,
-transcribing a public video URL, and understanding visible video content. Components
-work independently. `Pipeline` runs requested stages together and returns output only
-when every requested stage succeeds.
+Turn public videos into metadata, transcripts, downloaded media, and visual observations.
+A typed, asynchronous Python library with independent components and an optional pipeline.
 
-From a local checkout, install the locked development environment and the extras you
-need:
+- **Inspect and download** public YouTube, Instagram, and TikTok URLs with yt-dlp.
+- **Transcribe** a public video URL with Supadata, as text or timed segments.
+- **Analyze visuals** in a local video with Gemini, as prose or structured events.
+- **Process local media** with FFmpeg: probe, extract audio, convert, and tag a copy.
+
+The pipeline returns every requested output together. If a stage fails, it cancels
+pending work where possible, cleans up owned media, and raises an error.
+
+## Installation
+
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+From a checkout:
 
 ```bash
-uv sync --locked --extra all --group dev
+git clone https://github.com/Valendrew/video-downloader-library.git
+cd video-downloader-library
+uv sync --locked --extra all
 ```
 
-Release `v0.1.0` is prepared but unavailable until it is deliberately published. Once
-published, verify its pinned GitHub release artifact before installing it:
+Choose `gemini`, `supadata`, or `download` instead of `all` to install only the
+provider dependencies you need. FFmpeg, ffprobe, and a JavaScript runtime are separate
+host tools. See the [installation guide](docs/install.md) for application integration
+and tool setup.
 
-```bash
-curl -LO https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/SHA256SUMS
-curl -LO https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl
-sha256sum -c SHA256SUMS
-uv add 'video-context-pipeline[gemini] @ https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl'
-```
+## First steps
 
-The equivalent pip command is
-`pip install 'video-context-pipeline[gemini] @ https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl'`.
-An optional source installation can use the future `v0.1.0` Git tag.
-
-The library accepts public HTTP(S) URLs on YouTube, Instagram, and TikTok, including
-their subdomains. It does not accept local or internal URLs. Downloaded `MediaArtifact`
-files are local artifacts; an owned artifact may be removed by `cleanup()`, while a
-caller-owned path is never removed.
-
-See the [documentation](https://valendrew.github.io/video-downloader-library/) for
-installation, configuration, schemas, components, and provider-validation limits.
-That Pages site is prepared for an explicit deployment and may not yet be enabled.
-
-## Quick start
-
-The example constructs configuration only. It deliberately makes no provider call.
+Start with an offline configuration example:
 
 ```bash
 uv run python examples/offline_configuration.py
 ```
 
-The [examples](examples/) construct configuration and requests without making provider
-calls. Copy `.env.example` to a private environment-management location and supply
-real keys only when you intentionally make provider calls; the library does not read
-`.env` files.
+Then follow [your first request](docs/quickstart.md) for a complete transcription
+example. Settings are explicit; the optional environment loader reads only selected
+services and never opens `.env` files.
 
-## License and dependencies
+## Documentation
 
-This project is MIT-licensed. Provider extras and installed tools keep their own
-licenses. See [dependencies and code provenance](docs/dependencies.md).
+Browse the [documentation site](https://valendrew.github.io/video-downloader-library/)
+or read the guides in this checkout:
+
+| Learn about | Guide |
+| --- | --- |
+| Credentials, timeouts, and service settings | [Configuration](docs/configuration.md) |
+| Gemini, Supadata, and yt-dlp setup | [Providers](docs/providers/index.md) |
+| Combining components | [Pipeline](docs/components/pipeline.md) |
+| Request fields and returned data | [Schemas and requests](docs/schemas.md) |
+| Failures and file cleanup | [Errors and logging](docs/errors-and-logging.md) |
+
+## Development
+
+```bash
+uv sync --locked --extra all --group dev
+uv run python -m unittest discover -s tests
+uv run mkdocs serve
+```
+
+See [development](docs/development.md) for checks and builds, and
+[documentation development](docs/documentation.md) for local previews.
+
+## License
+
+MIT. Optional dependencies and host tools retain their own licenses.
+See [dependencies and provenance](docs/dependencies.md).

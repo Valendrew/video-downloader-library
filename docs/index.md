@@ -1,31 +1,67 @@
-# Video Context Pipeline
+# Video in. Useful context out.
 
-Video Context Pipeline is a typed asynchronous Python library for four independent
-jobs: inspect or download a supported public video, transcribe its public URL,
-understand visible content in a local video artifact, and run selected jobs as one
-pipeline.
+<div class="vcp-intro" markdown>
 
-A supported input URL is public `http` or `https` on YouTube (`youtube.com` or
-`youtu.be`), Instagram (`instagram.com` or `instagr.am`), or TikTok (`tiktok.com`),
-including subdomains. The pipeline rejects other hosts, local paths, credentials in
-URLs, and non-HTTP schemes.
+Inspect a video, read what was said, or understand what happened on screen.
+Use the Python components independently, or combine them in one asynchronous pipeline.
 
-Choose a component by the data you have and the output you need:
+</div>
 
-| Input and desired output | Canonical component page |
-| --- | --- |
-| Public video URL → metadata or downloaded video/audio | [Download and metadata](components/downloads.md) |
-| Public video URL → transcript text or timed segments | [Transcription](components/transcription.md) |
-| Local video `MediaArtifact` → visible observations or events | [Visual understanding](components/visual.md) |
-| Local media file → measured facts, extracted/converted audio, or tagged copy | [Local media tools](components/media-tools.md) |
-| Public video URL → several requested outputs together | [Pipeline](components/pipeline.md) |
+[Get started](install.md){ .md-button .md-button--primary }
+[Make your first request](quickstart.md){ .md-button }
 
-`MediaArtifact` describes a local file. An artifact returned by the downloader is
-owned by the library and can be released with `cleanup()`; caller paths are not
-deleted. A pipeline-only download used for visual analysis is an internal artifact
-and is cleaned after successful visual processing. Request `media` when the caller
-needs the downloaded artifact returned.
+## Pick the job you need
 
-Start with [installation](install.md), then provide explicit settings through
-[configuration](configuration.md). Read the recorded [provider-validation](provider-validation.md)
-before relying on a provider combination in production.
+<div class="grid cards" markdown>
+
+- **Download & inspect**
+
+    Get formats, title, description, and duration. Choose a format and keep a local file.
+
+    [Work with public videos →](components/downloads.md)
+
+- **Transcribe speech**
+
+    Send a public URL to Supadata. Receive readable text or segments with timing.
+
+    [Build a transcript →](components/transcription.md)
+
+- **Understand visuals**
+
+    Send a local video to Gemini. Receive visible observations with your chosen timing policy.
+
+    [Analyze a video →](components/visual.md)
+
+- **Process local media**
+
+    Measure a file, extract audio, convert it, or write a tagged copy with FFmpeg.
+
+    [Use media tools →](components/media-tools.md)
+
+</div>
+
+## How the pieces fit
+
+**Settings** describe how a service should run: credentials, timeouts, and processing
+choices. A **request** selects the output you want. A **provider** performs the work
+and returns a typed **output** containing data and its status.
+
+The optional [pipeline](components/pipeline.md) coordinates providers for one public
+video URL. It returns only after all requested stages succeed. Empty content is a
+successful result; a provider failure raises an error.
+
+## Supported inputs
+
+URL components accept public HTTP(S) URLs on YouTube (`youtube.com`, `youtu.be`),
+Instagram (`instagram.com`, `instagr.am`), and TikTok (`tiktok.com`), including their
+subdomains. Local or internal URLs, embedded credentials, and other schemes are rejected.
+Availability still depends on the source and provider; see [validation coverage](provider-validation.md).
+
+Gemini and FFmpeg work with local files. A `MediaArtifact` records the path, media
+type, duration when known, and ownership. Caller-owned files are preserved. Returned
+library-owned media can be released with `cleanup()` or a context manager.
+
+## Continue from here
+
+Set up [service configuration](configuration.md), compare [providers](providers/index.md),
+or look up [request fields and result shapes](schemas.md).

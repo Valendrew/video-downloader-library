@@ -1,41 +1,74 @@
-# Visual understanding
+# Understand visible content
 
-`GeminiProvider(client=None, logger=None)` analyzes a local `MediaArtifact` with a
-`VisualRequest`; it never downloads a URL itself. Use [Pipeline](pipeline.md) for a
-public URL plus an explicit internal or returned download request.
+Use Gemini to describe visible actions, objects, and text in a local video. Choose
+readable prose or structured events, with no timing, approximate timestamps, or your
+own time-window labels.
+
+## Before you start
+
+Install the `gemini` extra and create settings from
+[the Gemini guide](../providers/gemini.md#configure). The following function accepts
+those settings and an existing local video. Use static mode for this bounded example,
+and supply a clip at least 60 seconds long.
+
+## Analyze an interval
 
 ```python
-result = await provider.understand(
-    artifact,
-    VisualRequest(
+from pathlib import Path
+from video_context_pipeline import GeminiSettings, MediaArtifact, VisualRequest
+from video_context_pipeline.providers.gemini import GeminiProvider
+
+async def describe(path: Path, settings: GeminiSettings) -> None:
+    artifact = MediaArtifact(path=path, media_type="video/mp4", owned=False)
+    request = VisualRequest(
         format="video_events",
-        settings=gemini_settings,
+        settings=settings,
         timestamp_mode="approximate",
         analyzed_start_seconds=0,
         analyzed_end_seconds=60,
-    ),
-    transcript_context=None,
-)
+    )
+    result = await GeminiProvider().understand(
+        artifact,
+        request,
+        transcript_context=None,
+    )
+    for event in result.data:
+        print(event.timestamp_seconds, event.description)
 ```
 
-`video_events` returns canonical `VideoEvent` values. `video_text` returns readable
-event text formatted from the same visual-event response. Choose timing and optional
-windows explicitly as described in [schemas](../schemas.md). Approximate timestamps
-are model observations, while caller-supplied windows are deterministic labels.
+The file stays caller-owned. The method makes real provider requests when awaited.
+For an arbitrary video length, provide its measured duration or choose a valid explicit
+analysis end. [Local media tools](media-tools.md) can measure the file.
 
-Static Gemini processing sends the explicit FPS and can analyze a bounded interval.
-Agentic processing cannot analyze a partial interval. Automatic processing needs known
-media duration and chooses agentic at the configured threshold; otherwise it uses
-static FPS. The full model, resolution, thinking, upload, timeout, retry, and polling
-settings are required by `GeminiSettings` and listed in [configuration](../configuration.md).
+## Choose the output
 
-Choose resolution for the visual task: low suits general actions, medium uses the same
-documented video allocation, and high is for small text. Download quality is an
-independent caller choice; resolution does not alter it, and the library does not
-escalate either setting automatically. An accepted FPS value is an API acceptance
-observation, not a measured sampling schedule. Never derive an event time from frame
-position or FPS; use only the model's approximate timestamp or a caller-defined window.
+| Need | Request choice |
+| --- | --- |
+| Readable description | `format="video_text"` |
+| Events for application processing | `format="video_events"` |
+| Observations without time claims | `timestamp_mode="none"` |
+| Approximate positions in the source | `timestamp_mode="approximate"` |
+| Events grouped into your intervals | `timestamp_mode="windows"` and explicit `windows` |
 
-An optional transcript context is independent reference data. Gemini is instructed to
-describe only visible observations and not describe audio or transcription. The request
-contains no output-token cap, stop sequence, or event-count cap.
+Both output formats come from the same event response. See
+[timestamp modes and window examples](../schemas.md#timestamp-modes) for their exact meaning.
+`inspection_windows` directs attention to intervals without changing the event schema.
+
+## Choose processing separately
+
+Static processing sends your FPS and supports partial intervals. Agentic processing
+requires the full video. Automatic processing needs a known duration and chooses the
+mode at your configured threshold. See [processing modes](../providers/gemini.md#processing-modes).
+
+Resolution and download quality are separate settings. The library does not increase
+either automatically. Accepted FPS is not evidence of an exact frame schedule, so do
+not calculate event timestamps from frame positions.
+
+## Add transcript context or start from a URL
+
+The optional `transcript_context` argument accepts text as independent reference data.
+The adapter instructs Gemini to describe visible observations only. For a public URL,
+use [the pipeline](pipeline.md) with explicit download settings; Gemini itself does
+not download source URLs.
+
+[Gemini provider details and upstream docs →](../providers/gemini.md)

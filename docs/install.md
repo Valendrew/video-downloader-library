@@ -1,38 +1,83 @@
-# Install
+# Installation
 
-Video Context Pipeline requires Python 3.11 or newer. From a local checkout, create a
-locked environment with the provider extras you need:
+Use Python **3.11 or newer** and [install uv](https://docs.astral.sh/uv/getting-started/installation/).
+The base package has no runtime dependencies. Install extras for the components you use.
 
-```bash
-uv sync --locked --extra gemini --group dev
-# or: --extra supadata, --extra download, --extra providers, or --extra all
-```
-
-`providers` and `all` include both HTTP providers and the downloader.
-
-GitHub release `v0.1.0` is prepared but is not published. After it is deliberately
-published, download its pinned wheel and `SHA256SUMS`, then verify the artifact:
+## Work from a checkout
 
 ```bash
-curl -LO https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/SHA256SUMS
-curl -LO https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl
-sha256sum --ignore-missing -c SHA256SUMS
-uv add 'video-context-pipeline[gemini] @ https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl'
+git clone https://github.com/Valendrew/video-downloader-library.git
+cd video-downloader-library
+uv sync --locked --extra all
 ```
 
-The equivalent pip command is
-`pip install 'video-context-pipeline[gemini] @ https://github.com/Valendrew/video-downloader-library/releases/download/v0.1.0/video_context_pipeline-0.1.0-py3-none-any.whl'`.
-The future `v0.1.0` Git tag is also an optional source-installation pin.
+This installs the local library and all provider extras into `.venv`. To select one
+service, replace `all` with an extra from the table below.
 
-The downloader requires `yt-dlp` and a configured JavaScript runtime mapping for
-hosts that need one. Install a supported runtime such as Node.js or Deno on the host.
-Local media operations require separately installed `ffmpeg` and `ffprobe`; neither
-tool is bundled in the wheel. Their formats and codecs depend on their installed
-builds.
+## Add the library to your application
 
-Build the documentation from the checkout with:
+From your application's uv project, add an editable path to your local checkout:
 
 ```bash
-uv sync --locked --extra all --group dev
-uv run mkdocs build --strict
+uv add --editable '/absolute/path/to/video-downloader-library[supadata]'
 ```
+
+Replace the path with your checkout location and choose the extra you need. An editable
+installation uses your local source changes immediately. The distribution is named
+`video-context-pipeline`; Python imports use `video_context_pipeline`.
+
+## Choose dependencies
+
+| Extra | Installs | Use it for |
+| --- | --- | --- |
+| No extra | Base library only | Types, configuration, and your own provider implementations |
+| `supadata` | HTTPX | Public URL transcription |
+| `gemini` | HTTPX | Local video understanding |
+| `download` | yt-dlp with its default extras | Metadata and media downloads |
+| `providers` or `all` | All of the above | Combined workflows |
+
+For example, from the library checkout:
+
+```bash
+uv sync --locked --extra supadata --extra download
+```
+
+See [dependencies and licenses](dependencies.md) for provenance and transitive dependencies.
+
+## Install host tools
+
+Python extras do not install these executables:
+
+| Tool | Needed by | Configuration |
+| --- | --- | --- |
+| FFmpeg and ffprobe | Local probing, audio conversion, and metadata enrichment | Explicit executable paths in `FFmpegMediaTools` |
+| A supported JavaScript runtime | yt-dlp extraction on hosts that require it | Explicit `js_runtimes` mapping |
+
+Install [FFmpeg](https://ffmpeg.org/download.html) and consult
+[yt-dlp's runtime setup](https://github.com/yt-dlp/yt-dlp/wiki/EJS).
+Check the executables you plan to use:
+
+```bash
+ffmpeg -version
+ffprobe -version
+node --version
+# If using Deno instead:
+deno --version
+```
+
+Use the actual installed paths in your application. See [yt-dlp setup](providers/ytdlp.md)
+and [local media tools](components/media-tools.md) for constructors.
+
+## Verify the Python environment
+
+```bash
+uv run python examples/offline_configuration.py
+```
+
+This constructs settings with fake credentials and makes no provider requests.
+Continue with [your first request](quickstart.md).
+
+## Development and docs
+
+[Development](development.md) covers linting, tests, and package builds.
+[Documentation](documentation.md) covers the live preview and strict site build.

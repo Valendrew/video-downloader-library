@@ -1,23 +1,46 @@
-# Transcription
+# Transcribe a public video
 
-`SupadataProvider(client=None, logger=None)` transcribes a supported **public video
-URL**. It does not accept a local audio file. Use the independent
-[Local media tools](media-tools.md) only to prepare local audio; they do not turn it
-into Supadata input.
+Use Supadata to turn a public video URL into text or timed speech segments.
+Local audio files are not accepted by this adapter. You do not need to download media.
+
+## Before you start
+
+Install the `supadata` extra and prepare `SupadataSettings` using
+[the provider guide](../providers/supadata.md#configure). The example below uses those
+settings and makes a provider request when awaited. For a runnable script including
+settings, see [your first request](../quickstart.md).
+
+## Request timed segments
 
 ```python
-result = await provider.transcribe(
-    url,
-    TranscriptRequest(format="transcript_segments", settings=supadata_settings),
-)
+from video_context_pipeline import SupadataSettings, TranscriptRequest
+from video_context_pipeline.providers.supadata import SupadataProvider
+
+async def transcribe(url: str, settings: SupadataSettings) -> None:
+    provider = SupadataProvider()
+    result = await provider.transcribe(
+        url,
+        TranscriptRequest(format="transcript_segments", settings=settings),
+    )
+    for segment in result.data:
+        print(segment.start_seconds, segment.end_seconds, segment.text)
 ```
 
-Choose `transcript_segments` for canonical `TranscriptSegment` values, or
-`transcript_text` for readable text formatted from those segments. The request uses
-Supadata's generated transcript mode only. It has no language parameter, automatic
-mode, or fallback provider. The result may be `empty` when the provider returns no
-segments.
+Times are seconds on the source timeline. `end_seconds` may be `None` if unavailable.
+An empty successful response has no segments and `result.status == "empty"`.
 
-Set the request, job, polling, retry, and delay values in `SupadataSettings`; their
-required arguments are documented in [configuration](../configuration.md).
+## Request readable text
 
+Change the request format to `transcript_text` and read `result.data` as a string.
+The adapter formats this text from the same canonical segment response; changing the
+output format does not select a different transcription mode.
+
+## Behavior and limits
+
+The adapter always requests Supadata's generated transcript mode, without a language
+override or provider fallback. Returned language information is available in
+`result.language`. Timeouts, retries, and queued-job polling are explicit settings.
+
+See [Supadata](../providers/supadata.md) for upstream docs and validation limits,
+[schemas](../schemas.md#transcriptrequest) for the data contract, or
+[Pipeline](pipeline.md) to combine transcription with another output.

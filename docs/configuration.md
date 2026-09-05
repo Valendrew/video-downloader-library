@@ -1,15 +1,51 @@
 # Configuration
 
-Every request supplies a settings object. `load_environment()` is an optional helper
-that converts an explicit environment mapping into Gemini and Supadata settings. It
-does not read `.env` files or perform network I/O. Your application decides whether
-to pass `os.environ`, another mapping, or settings built directly in Python.
+Configure only the services you use. Settings control credentials and operational
+choices; requests control which output to produce. Invalid or missing applicable
+settings raise `ConfigurationError` instead of selecting replacement values.
 
-## Environment loader
+## Choose how to supply settings
 
-`load_environment(include_gemini=True, include_supadata=True, environ=...)` returns
-only the requested provider settings. All listed values are required when that
-provider is included, except the mode-dependent Gemini values described below.
+You can build `GeminiSettings`, `SupadataSettings`, and `MediaSettings` directly in
+Python, or load the HTTP provider settings from environment variables.
+
+```python
+from video_context_pipeline import load_environment
+
+settings = load_environment(include_supadata=True)
+assert settings.supadata is not None
+# settings.gemini is None: Gemini variables are not required or read.
+```
+
+### Environment loader interface
+
+```text title="Function reference"
+load_environment(
+    *,
+    include_gemini: bool = False,
+    include_supadata: bool = False,
+    environ: Mapping[str, str] | None = None,
+) -> EnvironmentSettings
+```
+
+| Argument | Behavior |
+| --- | --- |
+| `include_gemini` | Load and validate Gemini fields when `True`. |
+| `include_supadata` | Load and validate Supadata fields when `True`. |
+| `environ` | Read this mapping, or `os.environ` when omitted or `None`. |
+
+Both flags default to `False`. The returned object's `gemini` and `supadata` fields
+are settings objects for selected services and `None` for the others. Set both flags
+to load both services.
+
+The loader does not open `.env` files or contact providers. Your application decides
+how to populate the environment. The repository's `.env.example` lists the variables;
+keep real keys outside source control.
+
+## Gemini environment
+
+Use `load_environment(include_gemini=True)` and read `settings.gemini`.
+All fields below are required unless their description limits them to a processing mode.
 
 | Variable | Meaning |
 | --- | --- |
@@ -26,6 +62,18 @@ provider is included, except the mode-dependent Gemini values described below.
 | `VCP_GEMINI_FILE_UPLOAD_THRESHOLD_BYTES` | Positive request-size threshold for inline versus Files API upload. |
 | `VCP_GEMINI_FILE_POLL_DEADLINE_SECONDS` | Positive deadline while waiting for an uploaded file. |
 | `VCP_GEMINI_FILE_POLL_INTERVAL_SECONDS` | Positive interval between uploaded-file polls. |
+
+For a Python constructor, mode examples, and upstream documentation, see
+[Gemini](providers/gemini.md).
+
+## Supadata environment
+
+Use `load_environment(include_supadata=True)` and read `settings.supadata`.
+All six fields below are required. Numeric environment values are strings which the
+loader converts and validates.
+
+| Variable | Meaning |
+| --- | --- |
 | `SUPADATA_API_KEY` | Supadata API key. |
 | `VCP_SUPADATA_REQUEST_TIMEOUT_SECONDS` | Positive timeout for a Supadata HTTP request. |
 | `VCP_SUPADATA_JOB_TIMEOUT_SECONDS` | Positive total wait for a queued transcript job. |
@@ -33,38 +81,34 @@ provider is included, except the mode-dependent Gemini values described below.
 | `VCP_SUPADATA_MAX_RETRIES` | Non-negative retry count. |
 | `VCP_SUPADATA_RETRY_DELAY_SECONDS` | Positive retry delay. |
 
-`MediaSettings` is Python configuration, not an environment-loader setting:
-`MediaSettings(request_timeout_seconds=..., cookie_file=Path(...) | None,
-output_directory=Path(...) | None)`. The timeout is required and positive; cookie and
-output locations are explicit caller choices.
+For a complete settings example and transcript behavior, see [Supadata](providers/supadata.md).
 
-## Direct Python settings
+## Download settings
 
-The following construction makes every operational choice visible. It does not call
-a provider:
+The environment loader does not configure yt-dlp. Construct `MediaSettings` in Python:
 
 ```python
-from video_context_pipeline import GeminiSettings, MediaSettings, SupadataSettings
+from video_context_pipeline import MediaSettings
 
-gemini = GeminiSettings(
-    api_key="kept outside source control", model="gemini-3.5-flash-lite",
-    media_resolution="medium", thinking_level="medium", processing_mode="automatic",
-    static_fps=1.0, agentic_threshold_seconds=120.0, request_timeout_seconds=60.0,
-    max_retries=2, retry_backoff_seconds=1.0, file_upload_threshold_bytes=20_000_000,
-    file_poll_deadline_seconds=300.0, file_poll_interval_seconds=2.0,
+media_settings = MediaSettings(
+    request_timeout_seconds=60.0,
+    cookie_file=None,
+    output_directory=None,
 )
-supadata = SupadataSettings(
-    api_key="kept outside source control", request_timeout_seconds=30.0,
-    job_timeout_seconds=120.0, poll_interval_seconds=2.0, max_retries=2,
-    retry_delay_seconds=1.0,
-)
-media = MediaSettings(request_timeout_seconds=60.0, cookie_file=None, output_directory=None)
 ```
 
-`GeminiSettings` has one valid shape per mode: `static` needs `static_fps` and an
-explicit `None` threshold; `agentic` needs explicit `None` for both FPS and threshold;
-`automatic` needs both. Provider timeouts and retries can still fail an operation;
-there is no output size, stop-sequence, or event-count setting in this library.
+| Field | Meaning |
+| --- | --- |
+| `request_timeout_seconds` | Required positive download/inspection timeout. |
+| `cookie_file` | Optional `Path` to a cookie file; defaults to `None`. |
+| `output_directory` | Optional `Path` for download storage; defaults to `None` for temporary storage. |
 
-The repository-root `.env.example` contains the same loader fields with placeholders.
-Keep real keys outside the repository.
+A storage directory does not change artifact ownership: downloader-created files are
+still library-owned and removed by their cleanup method. Configure the JavaScript
+runtime separately on [the yt-dlp provider](providers/ytdlp.md).
+
+## Local media tools
+
+FFmpeg tools take explicit executable paths and an operation timeout in their
+constructor. They use no provider credentials or environment-loader fields.
+See [local media tools](components/media-tools.md) for a complete example.

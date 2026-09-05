@@ -155,7 +155,7 @@ Provide asynchronous calls and progress events suitable for GUI, TUI, CLI and we
 
 Use Python ≥3.11, a `src/video_context_pipeline` layout, `uv_build`, typed public interfaces, `py.typed`, optional provider dependencies and a development lockfile.
 
-Use the package name `video-context-pipeline`, MIT licensing and initial version `0.1.0`. Check code provenance and dependency licenses before publication; do not copy unlicensed code from the imported projects.
+Use the package name `video-context-pipeline`, MIT licensing. Check code provenance and dependency licenses before publication; do not copy unlicensed code from the imported projects.
 
 Prepare GitHub release automation for wheels, source archives and checksums. Document installation pinned to a release artifact. PyPI publication is deferred.
 
