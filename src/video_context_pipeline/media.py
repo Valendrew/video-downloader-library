@@ -434,6 +434,11 @@ class FFmpegMediaTools:
             stream.get("codec_type")
             for stream in streams
             if isinstance(stream, Mapping)
+            and not (
+                stream.get("codec_type") == "video"
+                and isinstance(stream.get("disposition"), Mapping)
+                and stream["disposition"].get("attached_pic") == 1
+            )
         ]
         if not codec_types:
             raise ProviderError("ffprobe output has no media streams")

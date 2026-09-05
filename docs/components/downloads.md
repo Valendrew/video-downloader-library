@@ -19,7 +19,11 @@ for candidate in inspection.formats:
     print(candidate.format_id, candidate.extension, candidate.video_codec, candidate.audio_codec)
 ```
 
-`MediaInspection` contains `formats`, `duration_seconds`, `title`, and `description`.
+`MediaInspection` contains `formats`, `duration_seconds`, `title`, `description`,
+and `thumbnails`. Each `MediaThumbnail` exposes `url`, `thumbnail_id`, `width`, and
+`height`; unknown fields remain `None`. The tuple preserves provider order and is
+empty when no usable HTTP(S) thumbnail URLs are reported. A top-level thumbnail URL
+is included if absent from the list. Inspection does not download images.
 Each `MediaFormat` describes a format ID, extension, codecs, bitrates, and known or
 estimated size. Unknown values remain `None`; an estimate is not an exact size.
 
@@ -44,6 +48,40 @@ The result is a `ProviderOutput` with `format="media"`. Its `data` is an owned
 `MediaArtifact`. Cleanup removes the downloaded file and its owned temporary directory.
 Caller-owned source paths are preserved.
 
+## Download source cover art
+
+```python
+cover = await provider.download_thumbnail(url, settings)
+with cover.data as thumbnail:
+    tagged = await tools.enrich_metadata(
+        audio,
+        destination=Path("tagged.mp3"),
+        metadata={"title": inspection.title or ""},
+        thumbnail=thumbnail.path,
+    )
+```
+
+Here `audio` is a local MP3 artifact, `tools` is configured as in
+[local media tools](media-tools.md), and `Path` comes from `pathlib`.
+`download_thumbnail()` fetches source artwork independently of media download and
+returns `ProviderOutput[MediaArtifact]` with `format="media"` and an `image/*` media
+type inferred from the downloaded extension. It uses the same explicit timeout,
+cookies, output directory, and runtime configuration as media operations.
+
+The operation uses yt-dlp's preferred available thumbnail policy: yt-dlp tries its
+preferred candidate first and may try another if that image is unavailable. It does
+not promise particular dimensions or an image encoding. It downloads no audio or
+video and does not invoke FFmpeg. Missing, empty, or unrecognized image output raises
+`ProviderError`; artwork is never silently omitted from a requested operation.
+FFmpeg validates/decodes the image when embedding it, converting cover art to JPEG.
+
+Keep the image alive until enrichment finishes. Its context manager removes the
+owned image and temporary directory. Failure, timeout, and cancellation clean up
+operation-owned files; cancellation waits for the blocking downloader to finish,
+which can extend beyond the configured timeout. Normal `download()` still returns
+only the selected media file. See `examples/source_thumbnail.py` for composition
+with cleanup when either download or enrichment fails.
+
 ## Plan an audio download
 
 ```python
@@ -64,7 +102,7 @@ plan's `selected_format_id` and `requires_mp3_conversion` before choosing the ne
 ## Return metadata through Pipeline
 
 `YtDlpMetadataProvider` adapts inspection into a metadata output containing title,
-description, duration, and formats. Configure it with the same settings and media
+description, duration, formats, and thumbnail dictionaries. Configure it with the same settings and media
 provider, then inject it as `metadata_provider` in [Pipeline](pipeline.md).
 
 [yt-dlp setup and upstream documentation →](../providers/ytdlp.md)

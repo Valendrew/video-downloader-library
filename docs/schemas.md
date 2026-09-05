@@ -8,7 +8,8 @@ The types on this page are exported from `video_context_pipeline` unless stated 
 
 | Request | `format` | Type of `ProviderOutput.data` |
 | --- | --- | --- |
-| Metadata inspection | `metadata` | Mapping with title, description, duration, and formats |
+| Source thumbnail download | `media` | Owned `MediaArtifact` with an `image/*` media type |
+| Metadata inspection | `metadata` | Mapping with title, description, duration, formats, and thumbnails |
 | `TranscriptRequest` | `transcript_text` | `str` |
 | `TranscriptRequest` | `transcript_segments` | `tuple[TranscriptSegment, ...]` |
 | `VisualRequest` | `video_text` | `str` |

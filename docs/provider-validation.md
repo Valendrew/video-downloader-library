@@ -48,6 +48,22 @@ Instagram sample `Chunk8-jurw` inspected successfully, with unknown duration and
 
 A local FFmpeg WAV-to-MP3 conversion succeeded and ffprobe confirmed codec MP3 and duration 1 second. FFmpeg and ffprobe are installed. YouTube extraction was checked using an explicit Node.js runtime; document Deno/Node setup for hosts.
 
+### Source thumbnails (2026-09-05)
+
+A direct `YtDlpMediaProvider.download_thumbnail()` call for the same public YouTube
+sample, with an explicit Node.js runtime and 30-second timeout, downloaded a
+23,038-byte WebP image. The adapter used `skip_download=True`, `writethumbnail=True`,
+and `write_all_thumbnails=False` with yt-dlp 2026.8.19. The owned artifact was cleaned
+up after the check. These correspond to upstream
+[thumbnail and skip-download options](https://github.com/yt-dlp/yt-dlp/blob/master/README.md#thumbnail-options).
+No paid provider calls were made. Thumbnail downloads on Instagram, TikTok, and
+cookie-authenticated sources remain unverified.
+
+Offline tests cover normalized inspection/metadata, missing and invalid output,
+owned-path enforcement, partial-file cleanup, timeout/cancellation, and embedding a
+fixture image returned by a fake downloader into MP3 and M4A with real FFmpeg.
+Those embedding tests use a generated PPM image, not the live WebP download.
+
 ## Repeating checks
 
 Manual scripts in `scripts/` explicitly read an environment file; the library itself never does so. Scripts send real requests and are excluded from routine CI. Private responses and media are kept under ignored `.validation/`. Successful matrix cases are not repeated automatically.

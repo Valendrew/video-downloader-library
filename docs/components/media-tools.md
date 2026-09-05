@@ -80,6 +80,11 @@ tagged = await tools.enrich_metadata(
 Metadata keys must be non-empty strings and values must be strings. Supply an existing
 thumbnail `Path` to embed cover art. Supported source containers are MP3, M4A, and MP4.
 This creates a new file, preserving the source and rejecting an existing destination.
+To use the video's original artwork, first call
+[`YtDlpMediaProvider.download_thumbnail()`](downloads.md#download-source-cover-art)
+and pass the returned artifact's `path` while its context manager is active. Network
+retrieval stays in the provider; local enrichment also works with caller-owned images.
+Probing audio with attached cover art reports an audio media type.
 
 ## File ownership
 

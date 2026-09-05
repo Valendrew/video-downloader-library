@@ -9,12 +9,13 @@ import shutil
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from math import isfinite
 from pathlib import Path
 from threading import Event
 from time import monotonic
 from typing import Any, Protocol
+from urllib.parse import urlsplit
 
 from ..config import MediaRequest, MediaSettings
 from ..errors import ProviderError, ValidationError
@@ -53,11 +54,22 @@ class MediaFormat:
 
 
 @dataclass(frozen=True, slots=True)
+class MediaThumbnail:
+    """Source artwork in provider preference order; dimensions may be unknown."""
+
+    url: str
+    thumbnail_id: str | None = None
+    width: int | None = None
+    height: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class MediaInspection:
     formats: tuple[MediaFormat, ...]
     duration_seconds: float | None
     title: str | None
     description: str | None
+    thumbnails: tuple[MediaThumbnail, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -171,6 +183,7 @@ class YtDlpMediaProvider:
                     result.get("description")
                     if isinstance(result.get("description"), str)
                     else None,
+                    self._thumbnails(result),
                 )
                 self._emit(
                     "media inspection completed",
@@ -270,6 +283,123 @@ class YtDlpMediaProvider:
                 shutil.rmtree(owned_directory, ignore_errors=True)
                 raise
 
+    async def download_thumbnail(
+        self, url: str, settings: MediaSettings
+    ) -> ProviderOutput[MediaArtifact]:
+        """Fetch source cover art using yt-dlp's preferred available thumbnail.
+
+        No audio/video is downloaded. The caller owns the returned image's lifetime.
+        Missing artwork is an error, including when yt-dlp only issues a warning.
+        """
+        with request_correlation(current_request_id()):
+            validate_platform_url(url)
+            directory = Path(
+                tempfile.mkdtemp(prefix="vcp-thumbnail-", dir=settings.output_directory)
+            )
+            started = monotonic()
+            try:
+                result = await self._run_ytdlp(
+                    url,
+                    settings,
+                    download=True,
+                    format_selector=None,
+                    progress=None,
+                    output_directory=directory,
+                    thumbnail_only=True,
+                )
+                path = self._thumbnail_path(result, directory)
+                media_type = mimetypes.guess_type(path.name)[0]
+                if media_type is None or not media_type.startswith("image/"):
+                    raise ProviderError(
+                        "yt-dlp thumbnail has an unsupported image type"
+                    )
+                artifact = MediaArtifact(
+                    path, media_type, owned=True, owned_directory=directory
+                )
+                self._emit(
+                    "thumbnail download completed",
+                    status="completed",
+                    stage="thumbnail",
+                    duration_seconds=monotonic() - started,
+                    bytes=path.stat().st_size,
+                )
+                return ProviderOutput(
+                    OutputFormat.MEDIA, artifact, "yt-dlp", OutputStatus.CONTENT
+                )
+            except BaseException as exc:
+                shutil.rmtree(directory, ignore_errors=True)
+                self._emit(
+                    "thumbnail download did not complete",
+                    status="cancelled"
+                    if isinstance(exc, asyncio.CancelledError)
+                    else "failed",
+                    stage="thumbnail",
+                    error_type=type(exc).__name__,
+                    duration_seconds=monotonic() - started,
+                )
+                raise
+
+    @staticmethod
+    def _thumbnail_path(result: Mapping[str, Any], directory: Path) -> Path:
+        thumbnails = result.get("thumbnails")
+        paths: set[Path] = set()
+        if isinstance(thumbnails, (list, tuple)):
+            for item in thumbnails:
+                if not isinstance(item, Mapping) or not isinstance(
+                    item.get("filepath"), str
+                ):
+                    continue
+                path = Path(item["filepath"]).resolve()
+                if (
+                    path.parent == directory.resolve()
+                    and path.is_file()
+                    and path.stat().st_size > 0
+                ):
+                    paths.add(path)
+        if len(paths) != 1:
+            raise ProviderError("yt-dlp did not produce one source thumbnail")
+        chosen = paths.pop()
+        # Failed upstream candidates may leave partial files with another extension.
+        for extra in directory.iterdir():
+            if extra.resolve() != chosen:
+                if extra.is_dir() and not extra.is_symlink():
+                    shutil.rmtree(extra)
+                else:
+                    extra.unlink()
+        return chosen
+
+    @staticmethod
+    def _thumbnails(result: Mapping[str, Any]) -> tuple[MediaThumbnail, ...]:
+        raw = result.get("thumbnails")
+        items = list(raw) if isinstance(raw, (list, tuple)) else []
+        fallback = result.get("thumbnail")
+        if isinstance(fallback, str) and not any(
+            isinstance(item, Mapping) and item.get("url") == fallback for item in items
+        ):
+            items.append({"url": fallback})
+        normalized = []
+        for item in items:
+            if not isinstance(item, Mapping):
+                continue
+            url = item.get("url")
+            if not isinstance(url, str):
+                continue
+            try:
+                parsed = urlsplit(url)
+                if parsed.scheme not in {"https", "http"} or not parsed.hostname:
+                    continue
+            except ValueError:
+                continue
+            normalized.append(
+                MediaThumbnail(
+                    url,
+                    item.get("id") if isinstance(item.get("id"), str) else None,
+                    YtDlpMediaProvider._integer(item.get("width")),
+                    YtDlpMediaProvider._integer(item.get("height")),
+                )
+            )
+        return tuple(normalized)
+
     async def _run_ytdlp(
         self,
         url: str,
@@ -279,6 +409,7 @@ class YtDlpMediaProvider:
         format_selector: str | None,
         progress: Callable[[DownloadProgress], None] | None,
         output_directory: Path | None = None,
+        thumbnail_only: bool = False,
     ) -> Mapping[str, Any]:
         if settings.cookie_file is not None and not settings.cookie_file.is_file():
             raise ProviderError("configured cookie file is unavailable")
@@ -321,12 +452,19 @@ class YtDlpMediaProvider:
             "fragment_retries": 0,
             "extractor_retries": 0,
         }
+        if thumbnail_only:
+            options.update(
+                skip_download=True, writethumbnail=True, write_all_thumbnails=False
+            )
         if settings.cookie_file is not None:
             options["cookiefile"] = str(settings.cookie_file)
         if format_selector is not None:
             options["format"] = format_selector
         if output_directory is not None:
-            options["outtmpl"] = str(output_directory / "%(id)s.%(ext)s")
+            options["outtmpl"] = str(
+                output_directory
+                / ("source.%(ext)s" if thumbnail_only else "%(id)s.%(ext)s")
+            )
 
         def blocking() -> Mapping[str, Any]:
             factory = self._downloader_factory or self._installed_factory()
@@ -521,6 +659,7 @@ class YtDlpMetadataProvider:
                 "description": inspection.description,
                 "duration_seconds": inspection.duration_seconds,
                 "formats": formats,
+                "thumbnails": tuple(asdict(item) for item in inspection.thumbnails),
             },
             "yt-dlp",
             OutputStatus.CONTENT,
