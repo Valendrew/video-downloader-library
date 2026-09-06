@@ -575,6 +575,13 @@ class YtDlpMediaProvider:
         if format_data.video_codec not in {None, "none"}:
             return mimetypes.guess_type(f"x.{format_data.extension}")[0] or "video/mp4"
         if format_data.extension.lower() in {"mp4", "m4a", "m4p"}:
+            # Missing codec metadata is not an explicit audio-only declaration.
+            # Instagram progressive MP4 downloads commonly omit both codecs.
+            if (
+                format_data.extension.lower() == "mp4"
+                and format_data.video_codec is None
+            ):
+                return "video/mp4"
             return "audio/mp4"
         return mimetypes.guess_type(f"x.{format_data.extension}")[0] or "audio/mpeg"
 

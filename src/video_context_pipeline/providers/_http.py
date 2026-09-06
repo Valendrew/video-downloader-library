@@ -79,9 +79,20 @@ async def request_json(
                     timeout=timeout,
                     follow_redirects=False,
                 )
-        except (httpx.TransportError, TimeoutError):
+        except (httpx.TimeoutException, TimeoutError):
             if attempt == max_retries:
-                raise ProviderError("provider request could not be completed") from None
+                raise ProviderError("provider request timed out") from None
+            if on_retry is not None:
+                on_retry(attempt + 1, None)
+            await asyncio.sleep(
+                _within_deadline(retry_delay_seconds, deadline_monotonic)
+            )
+            continue
+        except httpx.TransportError:
+            if attempt == max_retries:
+                raise ProviderError(
+                    "provider connection could not be completed"
+                ) from None
             if on_retry is not None:
                 on_retry(attempt + 1, None)
             await asyncio.sleep(

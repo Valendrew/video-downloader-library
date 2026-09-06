@@ -33,6 +33,7 @@ from fastapi.staticfiles import StaticFiles
 from video_context_pipeline import ConfigurationError, MediaArtifact, ValidationError
 from video_context_pipeline.logging import request_correlation
 
+from .diagnostics import failure_message
 from .observability import Monitor
 from .operations import (
     InputError,
@@ -286,8 +287,8 @@ class Store:
                 terminal = "completed"
             except asyncio.CancelledError:
                 terminal = "cancelled"
-            except Exception:
-                job.error = "Operation failed. Check the input, provider availability, and explicit settings; no partial outputs were published."
+            except Exception as error:
+                job.error = failure_message(error)
             finally:
                 job.finalizing = True
                 if terminal != "completed":

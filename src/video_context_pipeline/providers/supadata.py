@@ -101,6 +101,12 @@ class SupadataProvider:
         headers: Mapping[str, str],
     ) -> ProviderOutput[str | tuple[TranscriptSegment, ...]]:
         settings = request.settings
+        self._emit(
+            "transcript generation requested",
+            status="started",
+            stage="transcript",
+            phase="request",
+        )
         response = await request_json(
             client,
             "GET",
@@ -133,12 +139,35 @@ class SupadataProvider:
                 )
             job_id = None
         deadline = monotonic() + request.settings.job_timeout_seconds
+        last_status: str | None = None
         while True:
             status = payload.get("status")
+            if isinstance(status, str) and status.lower() in {
+                "queued",
+                "active",
+                "completed",
+                "failed",
+                "error",
+                "cancelled",
+                "canceled",
+            }:
+                normalized_status = status.lower()
+                if normalized_status != last_status:
+                    self._emit(
+                        "transcript job status",
+                        status=normalized_status,
+                        stage="transcript",
+                        phase="poll",
+                    )
+                    last_status = normalized_status
             if isinstance(status, str) and status.lower() in _FAILED_JOB_STATUSES:
                 raise ProviderError("Supadata transcript job failed")
             if "content" in payload:
                 return payload
+            if isinstance(status, str) and status.lower() == "completed":
+                raise ProviderError(
+                    "Supadata completed a job without transcript content"
+                )
             if job_id is None:
                 raise ProviderError(
                     "Supadata returned an incomplete transcript response"

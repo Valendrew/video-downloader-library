@@ -64,6 +64,31 @@ owned-path enforcement, partial-file cleanup, timeout/cancellation, and embeddin
 fixture image returned by a fake downloader into MP3 and M4A with real FFmpeg.
 Those embedding tests use a generated PPM image, not the live WebP download.
 
+## Instagram download diagnosis
+
+A limited direct check of a reported Instagram post reproduced a progressive MP4
+with missing codec and duration metadata. Before the correction it was classified
+as `audio/mp4`; ffprobe measured H.264 video plus AAC audio, 57.26 seconds, in a
+23,185,035-byte file. Unknown MP4 video-codec metadata now retains `video/mp4` rather
+than being treated as explicit audio-only metadata. No duration is synthesized.
+
+Regression tests cover unknown versus explicit audio/video codecs, safe nested
+pipeline errors, distinct transport failures, and Supadata queue transitions and
+incomplete terminal responses. Supadata/Gemini request parameters are unchanged.
+After confirming that Render uses the same private keys as the original checkout,
+one no-retry check per service was run locally against the reported URL:
+
+| Service | Explicit diagnostic settings | Observed result |
+| --- | --- | --- |
+| Supadata | `mode=generate`, `text=false`; 180-second HTTP and job limits, 3-second polling interval, zero retries | HTTP 200 and non-empty transcript in 7.7 seconds; no queued job |
+| Gemini | `gemini-3.8-flash`, Static at 1 FPS, low resolution/thinking, untimed text output; 60-second request limit, zero retries; 20 MB upload threshold, 120-second file deadline, 2-second file polling | Files API upload/readiness and Interactions API succeeded; non-empty analysis in about 16 seconds after downloading; remote deletion returned HTTP 200 |
+
+These calls confirm successful responses for this URL and those settings, not
+transcript/analysis accuracy. Local temporary media was removed. The earlier
+180-second Supadata timeout on Render was not reproduced, and its exact cause
+remains unconfirmed; a successful local call does not verify the deployed host or
+its submitted settings. No additional paid retries were made.
+
 ## Repeating checks
 
 Manual scripts in `scripts/` explicitly read an environment file; the library itself never does so. Scripts send real requests and are excluded from routine CI. Private responses and media are kept under ignored `.validation/`. Successful matrix cases are not repeated automatically.

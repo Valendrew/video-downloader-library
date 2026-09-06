@@ -88,6 +88,36 @@ class FakeDownloader:
 
 
 class YtDlpTests(unittest.IsolatedAsyncioTestCase):
+    async def test_mp4_missing_codec_metadata_is_not_audio_only(self):
+        for codec, expected in (
+            (None, "video/mp4"),
+            ("none", "audio/mp4"),
+            ("h264", "video/mp4"),
+        ):
+            with self.subTest(codec=codec):
+
+                class ProgressiveDownloader(FakeDownloader):
+                    def extract_info(self, url, *, download):
+                        path = Path(str(self.options["outtmpl"])).parent / "source.mp4"
+                        path.write_bytes(b"fixture")
+                        return {
+                            "format_id": "1",
+                            "ext": "mp4",
+                            "vcodec": codec,
+                            "requested_downloads": [{"filepath": str(path)}],
+                        }
+
+                provider = YtDlpMediaProvider(
+                    js_runtimes={}, downloader_factory=ProgressiveDownloader
+                )
+                result = await provider.download(
+                    "https://www.instagram.com/p/example/",
+                    MediaRequest(MediaSettings(5), "1"),
+                )
+                with result.data as media:
+                    self.assertEqual(media.media_type, expected)
+                    self.assertIsNone(media.duration_seconds)
+
     async def test_thumbnail_inspection_normalizes_and_metadata_exposes_artwork(self):
         class InspectionDownloader(FakeDownloader):
             def extract_info(self, url, *, download):

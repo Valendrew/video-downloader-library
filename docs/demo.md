@@ -124,7 +124,7 @@ that a live source or provider was verified in a demo test.
 | --- | --- | --- |
 | URL metadata inspection | Independent inspect; pipeline metadata | [Inspection](components/downloads.md#inspect-available-formats); supported public platforms only |
 | Format and thumbnail enumeration | Inspection results | Unknown metadata remains unknown; image enumeration makes no thumbnail download |
-| Explicit media download | Independent download; pipeline media | [Selected format](components/downloads.md#download-your-selection); no silent quality replacement |
+| Explicit media download | Independent download; pipeline media | [Selected format](components/downloads.md#download-your-selection); unknown MP4 codecs do not imply audio-only; no silent quality replacement |
 | Audio download planning | Independent planner; reviewed audio flow | [Planner](components/downloads.md#plan-an-audio-download); ratio required, no download in planner |
 | Source-thumbnail download | Independent thumbnail; audio-flow cover art | [Preferred available thumbnail](components/downloads.md#download-source-cover-art); no fixed dimensions promised |
 | Supadata text and segments | Independent transcription; pipeline transcript | [Transcription](components/transcription.md); generated public-URL transcripts only |
@@ -136,6 +136,7 @@ that a live source or provider was verified in a demo test.
 | Tags and cover art | Independent enrichment; optional audio-flow enrichment | [Enrichment](components/media-tools.md#write-metadata-to-a-copy); writes a copy |
 | Optional all-or-nothing pipeline | Dedicated Pipeline mode | [Pipeline](components/pipeline.md); actual library orchestrator |
 | Owned artifact cleanup | Session downloads, cancellation, expiry and shutdown | Demo lifecycle below; library [ownership](schemas.md#mediaartifact) stays unchanged |
+| Provider failure diagnosis | Specific redacted errors, HTTP statuses, request/poll phases, queue states and retries | Distinguishes invalid video inputs, transport timeouts, polling deadlines, access/quota failures; raw provider errors remain hidden |
 | Downloader reference workflow | Inspect → review audio plan → download → required conversion → optional tags and source/uploaded cover → browser download | Uses public library services; the demo owns jobs and file serving |
 | Recipe-context reference workflow | Pipeline metadata description, Supadata transcript, and Gemini event descriptions/times | Recipe generation, prompt assembly, databases, and caption/Gemini-audio fallbacks remain outside the library/demo |
 
@@ -172,6 +173,28 @@ The application logs factual operational events and suppresses access logs in th
 supplied commands. It must not log API keys, cookies, private inputs, returned
 content, or cost/usage estimates. Provider errors are presented without exposing
 credentials or raw private request content.
+
+## Troubleshoot provider failures
+
+Source downloads and Supadata transcription use separate provider paths: a successful
+yt-dlp download does not establish that Supadata can fetch or transcribe the same URL.
+Supadata's initial HTTP timeout and queued-job timeout apply to different phases;
+see [transcription timing](components/transcription.md#behavior-and-limits).
+
+For Gemini, an uploaded or downloaded artifact must be classified as video. Instagram
+may omit codec and duration metadata; MP4 downloads with unknown codecs retain the
+video container type. Static processing can use unknown-duration video, but timed
+output still requires an explicit analysis end or measured duration. Probe a session
+file when needed and reuse it for independent visual analysis.
+
+The error area distinguishes known validation errors, HTTP/connection timeouts,
+queue deadlines, and provider HTTP status failures. Consult operational records
+before changing timeouts: a failure within a few seconds is not evidence that a
+60-second HTTP timeout was reached. A reported Instagram URL was successfully
+transcribed and analyzed with the same provider keys in a local check after the
+MP4 classification fix; see [the measured results](provider-validation.md#instagram-download-diagnosis).
+This does not establish the cause of an earlier Render timeout. Local fixes take
+effect on Render only after you manually deploy the updated code.
 
 ## Container and manual Render deployment
 

@@ -54,6 +54,10 @@ The helper enables INFO logging for its handler, adds an actual UTC timestamp, a
 chooses ERROR for failed records, WARNING for retrying records, and INFO otherwise.
 Lifecycle records include a correlated request ID and allowlisted factual fields.
 Terminal provider records include the HTTP status when available, otherwise `null`.
+HTTP request timeouts are distinguished from connection failures in provider
+exceptions. The demo exposes audited explanations for these conditions, HTTP
+status failures, and known input-validation errors, including causes wrapped by a
+pipeline failure. Arbitrary exception text and provider error bodies remain hidden.
 
 ## What is logged
 

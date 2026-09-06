@@ -136,6 +136,16 @@ class FactualHandler(logging.Handler):
                 facts[key] = value
         if isinstance(fields.get("total_is_estimate"), bool):
             facts["total_is_estimate"] = fields["total_is_estimate"]
+        if fields.get("phase") in ("request", "poll"):
+            facts["phase"] = fields["phase"]
+        if fields.get("error_type") in (
+            "ProviderError",
+            "ValidationError",
+            "ConfigurationError",
+            "PipelineError",
+            "TimeoutError",
+        ):
+            facts["error_type"] = fields["error_type"]
         stage = fields.get("stage")
         if not isinstance(stage, str) or stage not in {
             "pipeline",
@@ -162,6 +172,9 @@ class FactualHandler(logging.Handler):
             "failed",
             "cancelled",
             "retry",
+            "retrying",
+            "queued",
+            "active",
             "running",
             "empty",
         }:

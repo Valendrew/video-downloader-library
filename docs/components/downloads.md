@@ -48,6 +48,12 @@ The result is a `ProviderOutput` with `format="media"`. Its `data` is an owned
 `MediaArtifact`. Cleanup removes the downloaded file and its owned temporary directory.
 Caller-owned source paths are preserved.
 
+Missing codec metadata does not mean an audio-only source. An MP4 whose video codec
+is unknown uses the container's `video/mp4` type; an explicit `vcodec="none"`
+identifies audio-only MP4. Some Instagram downloads omit both codecs and duration.
+Use the independent [probe service](media-tools.md#measure-a-file) when measured
+stream types or duration are needed; the downloader does not invent a duration.
+
 ## Download source cover art
 
 ```python

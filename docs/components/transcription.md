@@ -41,6 +41,14 @@ The adapter always requests Supadata's generated transcript mode, without a lang
 override or provider fallback. Returned language information is available in
 `result.language`. Timeouts, retries, and queued-job polling are explicit settings.
 
+`request_timeout_seconds` bounds each HTTP attempt, including the initial generation
+request. Retries can make the full operation longer than that value.
+`job_timeout_seconds` starts after a job ID is received and bounds its polling;
+increasing it cannot fix a timeout in the initial request. Operational records
+distinguish the initial `request` phase from `poll`, and report changes to
+`queued`, `active`, or terminal job status. A completed job without content is an
+invalid response, not a reason to keep polling until the deadline.
+
 See [Supadata](../providers/supadata.md) for upstream docs and validation limits,
 [schemas](../schemas.md#transcriptrequest) for the data contract, or
 [Pipeline](pipeline.md) to combine transcription with another output.

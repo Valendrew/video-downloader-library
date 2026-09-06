@@ -51,6 +51,39 @@ def gemini_settings(
 
 
 class ProviderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_supadata_reports_queue_phases_and_incomplete_terminal_response(self):
+        states = iter(
+            [
+                {"jobId": "private-job", "status": "queued"},
+                {"status": "active"},
+                {"status": "completed"},
+            ]
+        )
+
+        def handler(request):
+            return httpx.Response(200, json=next(states))
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            with self.assertLogs(
+                "video_context_pipeline.providers.supadata", level="INFO"
+            ) as logs:
+                with self.assertRaisesRegex(
+                    ProviderError, "completed a job without transcript content"
+                ):
+                    await SupadataProvider(client=client).transcribe(
+                        "https://www.instagram.com/p/example/",
+                        TranscriptRequest(
+                            OutputFormat.TRANSCRIPT_TEXT,
+                            SupadataSettings("private-key", 1, 1, 0.001, 0, 0.001),
+                        ),
+                    )
+        facts = [record.vcp_fields for record in logs.records]
+        self.assertEqual(
+            [entry["status"] for entry in facts if entry.get("phase") == "poll"],
+            ["queued", "active", "completed"],
+        )
+        self.assertNotIn("private", str(facts))
+
     async def test_terminal_http_status_is_reported_without_provider_body(self) -> None:
         secret_body = "private-provider-body"
         async with httpx.AsyncClient(
